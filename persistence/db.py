@@ -2,6 +2,9 @@ import mysql.connector
 
 class SocialStorage(object):
   def __init__(self):
+    """
+    Initializing Mysql DB Connection
+    """
     self.mydb = mysql.connector.connect(
       host="localhost",
       user="root",
@@ -12,14 +15,27 @@ class SocialStorage(object):
     self.mydb.commit()
 
   def createUserTable(self):
+    """
+    Create table for users if does not exist
+    :return:
+    """
     self.cursor.execute("CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255) NOT NULL, UNIQUE(username))")
     self.mydb.commit()
 
   def createConnectionsTable(self):
+    """
+    Create table for user friend requests if does not exist
+    :return:
+    """
     self.cursor.execute("CREATE TABLE IF NOT EXISTS connections (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), friend VARCHAR(255), pending INT)")
     self.mydb.commit()
 
   def createUsers(self, username):
+    """
+    Creates new user
+    :param username: unique username
+    :return: error or success response
+    """
     self.createUserTable()
     sql = "SELECT * FROM users WHERE username = %s"
     val = (username,)
@@ -33,6 +49,12 @@ class SocialStorage(object):
       return 201
 
   def connectFriends(self, user, friend):
+    """
+    Function to connect friend requests to users
+    :param user:
+    :param friend:
+    :return: error or success response
+    """
     self.createConnectionsTable()
     sql = "SELECT * FROM users WHERE username = %s"
     val = (user,)
@@ -42,7 +64,7 @@ class SocialStorage(object):
     val = (friend,)
     self.cursor.execute(sql, val)
     res1 = self.cursor.fetchone()
-    if res is None or res1:
+    if res is None or res1 is None:
       return 404
     sql = "SELECT * FROM connections WHERE username = %s AND friend = %s"
     val = (user, friend)
@@ -69,6 +91,11 @@ class SocialStorage(object):
     return 200
 
   def getFriends(self, username):
+    """
+    Get List of Friends of a user
+    :param username: unique username
+    :return: list of friends
+    """
     sql = "SHOW TABLES LIKE 'connections'"
     self.cursor.execute(sql)
     res = self.cursor.fetchone()
@@ -78,8 +105,9 @@ class SocialStorage(object):
       self.cursor.execute(sql, val)
       if self.cursor.fetchone() is None:
         return 400
-      sql = "SELECT * FROM connections WHERE username = %s AND pending = %s"
-      self.cursor.execute(sql, val, 0)
+      sql = "SELECT friend FROM connections WHERE username = %s AND pending = %s"
+      val = (username,0)
+      self.cursor.execute(sql, val)
       friends = self.cursor.fetchall()
       if friends:
         return list(friends)
