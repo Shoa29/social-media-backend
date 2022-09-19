@@ -49,7 +49,7 @@ class ConnectUser(Resource):
 
 @ns.route("/friends/<userA>")
 class GetFriends(Resource):
-    def post(self, userA):
+    def get(self, userA):
         res = db_access.getFriends(userA)
         if res == 400:
             return {
@@ -63,8 +63,8 @@ class GetFriends(Resource):
                    }, 404
         else:
             return {
-                'status': 'success'
-            }, 202
+                'friends': res
+            }, 203
 
 
 
